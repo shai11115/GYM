@@ -98,9 +98,6 @@
             display: none;
         }
         @media (max-width: 767px) {
-            .app-container {
-                padding-bottom: 80px; /* Space for the fixed bottom bar */
-            }
             .bottom-nav {
                 display: flex;
             }
@@ -169,7 +166,7 @@
     </div>
 
     <!-- Main Content Area with Flexbox for alignment -->
-    <div class="app-container p-4 md:p-8 flex-grow flex flex-col overflow-y-auto">
+    <div class="app-container p-4 md:p-8 flex-grow flex flex-col overflow-y-auto pb-20">
         <!-- Contenedor para los modales -->
         <div id="modal-container" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden justify-center items-center z-50 p-4"></div>
         <div id="exercise-modal-container" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden justify-center items-center z-50 p-4"></div>
@@ -180,6 +177,8 @@
             </div>
         </div>
         <div id="missed-exercises-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden justify-center items-center z-50 p-4"></div>
+        <div id="delete-modal-container" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden justify-center items-center z-50 p-4"></div>
+
 
         <!-- Vistas de la aplicación -->
         <div id="miInformacion" class="app-view">
@@ -295,8 +294,9 @@
             <!-- Use flexbox to make cards the same height -->
             <div id="exercise-list" class="flex flex-wrap items-stretch gap-4"></div>
 
-            <div class="flex justify-center mt-4">
+            <div class="flex justify-center flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mt-4">
                 <button class="bg-blue-400 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-transform transform hover:scale-105" onclick="showAddExerciseModal()">Agregar Ejercicio</button>
+                <button class="bg-red-400 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-transform transform hover:scale-105" onclick="showDeleteExerciseModal()">Eliminar Ejercicio</button>
             </div>
         </div>
 
@@ -307,7 +307,8 @@
     </div>
 
     <!-- Mobile Navigation Bar -->
-    <div class="bottom-nav fixed bottom-0 left-0 right-0 bg-rose-300 text-white p-4 shadow-xl z-50 rounded-t-3xl justify-around items-center">
+    <div class="bottom-nav fixed bottom-0 left-0 right-0 bg-rose-300 text-white shadow-xl z-50 rounded-t-3xl justify-around items-center
+                h-12 md:h-16">
         <button class="flex flex-col items-center justify-center p-2 rounded-xl transition-transform transform hover:scale-110" onclick="changeView('miInformacion')">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             <span class="text-xs mt-1">Info</span>
@@ -355,10 +356,11 @@
         window.showConfirmationModal = showConfirmationModal;
         window.openModal = openModal;
         window.closeModal = closeModal;
-        window.deleteExercise = deleteExercise;
         window.deleteHistoryItem = deleteHistoryItem;
         window.showResetSummary = showResetSummary;
         window.resetWeek = resetWeek;
+        window.showDeleteExerciseModal = showDeleteExerciseModal;
+        window.performDelete = performDelete;
 
         // Data structure
         const defaultExercises = {
@@ -397,7 +399,7 @@
                 { name: "Hip thrust", series: 4, reps: 8, weight: 0, status: 0, description: "Ejercicio para glúteos y femorales.", howTo: "Apoya la parte superior de la espalda en un banco. Empuja la barra con las caderas.", image: "https://placehold.co/800x600/1e40af/ffffff?text=Hip+Thrust" },
                 { name: "Peso muerto rumano", series: 3, reps: 10, weight: 0, status: 0, description: "Ejercicio para los femorales y glúteos.", howTo: "De pie, con la barra. Flexiona la cadera manteniendo las piernas casi estiradas.", image: "https://placehold.co/800x600/1e40af/ffffff?text=Peso+Muerto+Rumano" },
                 { name: "Prensa", series: 4, reps: 10, weight: 0, status: 0, description: "Ejercicio para cuádriceps y glúteos.", howTo: "Siéntate en la máquina y empuja el peso con los pies.", image: "https://placehold.co/800x600/1e40af/ffffff?text=Prensa" },
-                { name: "Extensión de cuádriceps", series: 4, reps: 8, weight: 0, status: 0, description: "Ejercicio de aislamiento para los cuádriceps.", howTo: "Siéntate en la máquina y extiende las rodillas.", image: "https://placehold.co/800x600/1e40af/ffffff?text=Extension+Cuadriceps" },
+                { name: "Extensión de cuádriceps", series: 4, reps: 8, weight: 0, status: 0, description: "Ejercicio de aislamiento para los cuádriceps.", howTo: "Siéntate en la máquina y extiende las rodillas.", image: "https://placehold.co/800x600/1e40af/ffffff?text=Extencion+Cuadriceps" },
                 { name: "Sentadilla en Smith", series: 4, reps: 8, weight: 0, status: 0, description: "Ejercicio para los cuádriceps.", howTo: "Colócate en la máquina Smith y baja con la barra sobre los hombros.", image: "https://placehold.co/800x600/1e40af/ffffff?text=Sentadilla+Smith" },
                 { name: "Máquina de abductores", series: 4, reps: 8, weight: 0, status: 0, description: "Ejercicio para los abductores.", howTo: "Siéntate en la máquina y abre las piernas.", image: "https://placehold.co/800x600/1e40af/ffffff?text=Maquina+Abductores" },
                 { name: "Pantorrillas", series: 4, reps: 12, weight: 0, status: 0, description: "Ejercicio para las pantorrillas.", howTo: "De pie, levanta los talones para levantar el peso.", image: "https://placehold.co/800x600/1e40af/ffffff?text=Pantorrillas" }
@@ -910,7 +912,6 @@
                         </label>
                         ${exercise.image ? `<div class="mt-4"><span class="text-sm font-semibold">Imagen actual:</span><br><img src="${exercise.image}" class="mt-2 rounded-lg cursor-pointer w-full object-cover" onclick="openModal('${exercise.image}')"></div>` : ''}
                         <div class="flex justify-between space-x-2 mt-4">
-                            <button onclick="showConfirmationModal('¿Estás seguro que quieres eliminar este ejercicio?', () => deleteExercise('${day}', ${index}))" class="bg-red-400 text-white py-2 px-4 rounded-full">Eliminar</button>
                             <div class="flex space-x-2">
                                 <button onclick="closeModal('exercise-modal-container')" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-full">Cancelar</button>
                                 <button onclick="saveExercise('${day}', ${index})" class="bg-blue-400 text-white py-2 px-4 rounded-full">Guardar</button>
@@ -923,7 +924,7 @@
             document.getElementById('exercise-modal-container').classList.add('flex');
         }
 
-        async function saveExercise(day, index = null) {
+        async function saveExercise(day = null, index = null) {
             const name = document.getElementById('exercise-name').value;
             const series = parseInt(document.getElementById('exercise-series').value, 10);
             const reps = parseInt(document.getElementById('exercise-reps').value, 10);
@@ -953,18 +954,99 @@
                 status: 0
             };
 
+            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/privateData`, "data");
+
             if (index !== null) {
                 // Edit existing exercise
-                userData.exercises[day][index] = { ...userData.exercises[day][index], ...newExercise };
+                const exercisesToUpdate = userData.exercises[day];
+                if (imageUrl) {
+                    exercisesToUpdate[index] = { ...newExercise, status: exercisesToUpdate[index].status };
+                } else {
+                    exercisesToUpdate[index] = { ...newExercise, image: exercisesToUpdate[index].image, status: exercisesToUpdate[index].status };
+                }
+                await updateDoc(userDocRef, { exercises: userData.exercises });
             } else {
                 // Add new exercise
                 userData.exercises[currentDay].push(newExercise);
+                await updateDoc(userDocRef, { exercises: userData.exercises });
             }
             
-            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/privateData`, "data");
-            await updateDoc(userDocRef, { exercises: userData.exercises });
             closeModal('exercise-modal-container');
             showDay(currentDay);
+        }
+
+        function showDeleteExerciseModal() {
+            const exercises = userData?.exercises?.[currentDay] || [];
+            let contentHtml = `
+                <div class="bg-white p-6 rounded-3xl shadow-lg max-w-lg w-full scrollable-modal-content">
+                    <h3 class="text-xl font-bold mb-4">Eliminar Ejercicio</h3>
+                    <p class="mb-4">Selecciona los ejercicios que deseas eliminar:</p>
+                    <div class="space-y-2">
+            `;
+            if (exercises.length === 0) {
+                contentHtml += `<p class="text-gray-500 text-center">No hay ejercicios para eliminar.</p>`;
+            } else {
+                exercises.forEach((exercise, index) => {
+                    contentHtml += `
+                        <label class="flex items-center space-x-3 p-2 rounded-lg bg-gray-100 cursor-pointer hover:bg-gray-200">
+                            <input type="checkbox" data-index="${index}" class="form-checkbox h-5 w-5 text-red-600 rounded-md">
+                            <span class="text-gray-700">${exercise.name}</span>
+                        </label>
+                    `;
+                });
+            }
+            contentHtml += `
+                    </div>
+                    <div class="flex justify-end space-x-2 mt-4">
+                        <button onclick="closeModal('delete-modal-container')" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-full">Cancelar</button>
+                        <button onclick="performDelete()" class="bg-red-400 text-white py-2 px-4 rounded-full">Eliminar</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('delete-modal-container').innerHTML = contentHtml;
+            document.getElementById('delete-modal-container').classList.remove('hidden');
+            document.getElementById('delete-modal-container').classList.add('flex');
+        }
+
+        async function performDelete() {
+            const checkboxes = document.querySelectorAll('#delete-modal-container input[type="checkbox"]:checked');
+            const indexesToDelete = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index, 10));
+
+            if (indexesToDelete.length === 0) {
+                closeModal('delete-modal-container');
+                return;
+            }
+
+            const confirmMessage = `¿Estás seguro que quieres eliminar ${indexesToDelete.length} ejercicio(s)?`;
+            showConfirmationModal(confirmMessage, async () => {
+                const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/privateData`, "data");
+                const exercisesForDay = userData.exercises[currentDay];
+                
+                // Sort indexes in descending order to avoid issues with splice
+                indexesToDelete.sort((a, b) => b - a);
+
+                const historyToRemove = [];
+                indexesToDelete.forEach(index => {
+                    const exercise = exercisesForDay[index];
+                    historyToRemove.push({ day: currentDay, name: exercise.name });
+                    exercisesForDay.splice(index, 1);
+                });
+                
+                await updateDoc(userDocRef, { exercises: userData.exercises });
+
+                // Remove from history
+                const historyKeys = Object.keys(userData.history || {});
+                historyKeys.forEach(key => {
+                    const item = userData.history[key];
+                    if (historyToRemove.some(toRemove => toRemove.day === item.day && toRemove.name === item.name)) {
+                        delete userData.history[key];
+                    }
+                });
+                await updateDoc(userDocRef, { history: userData.history });
+
+                closeModal('delete-modal-container');
+                showDay(currentDay);
+            });
         }
 
         function openModal(imageSrc) {
@@ -992,7 +1074,7 @@
                     <p class="text-lg font-semibold mb-4">${message}</p>
                     <div class="flex justify-center space-x-4">
                         <button onclick="closeModal('modal-container')" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-full">Cancelar</button>
-                        <button onclick="window.confirmAction = true; closeModal('modal-container');" class="bg-red-400 text-white py-2 px-4 rounded-full">Confirmar</button>
+                        <button onclick="window.confirmAction = true;" class="bg-red-400 text-white py-2 px-4 rounded-full">Confirmar</button>
                     </div>
                 </div>
             `;
@@ -1004,27 +1086,6 @@
                 onConfirm();
                 closeModal('modal-container');
             };
-        }
-
-        async function deleteExercise(day, index) {
-            const exerciseName = userData.exercises[day][index].name;
-            userData.exercises[day].splice(index, 1);
-
-            // Remove from history if it exists there
-            const historyKeys = Object.keys(userData.history || {});
-            const keyToRemove = historyKeys.find(key => userData.history[key].day === day && userData.history[key].name === exerciseName);
-            if (keyToRemove) {
-                delete userData.history[keyToRemove];
-            }
-
-            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/privateData`, "data");
-            await updateDoc(userDocRef, {
-                exercises: userData.exercises,
-                history: userData.history
-            });
-
-            closeModal('exercise-modal-container');
-            showDay(day);
         }
 
         function renderHistory() {
