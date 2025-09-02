@@ -21,10 +21,12 @@
         
         // Define las variables de configuración de Firebase
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // Reemplaza los valores de 'mock-...' con la configuración real de tu proyecto de Firebase
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: 'mock-api-key',
-            authDomain: 'mock-auth-domain',
-            projectId: 'mock-project-id',
+            apiKey: 'mock-api-key', // <-- PEGA TU API KEY AQUÍ
+            authDomain: 'mock-auth-domain', // <-- PEGA TU DOMINIO DE AUTENTICACIÓN AQUÍ
+            projectId: 'mock-project-id', // <-- PEGA TU ID DE PROYECTO AQUÍ
             storageBucket: 'mock-storage-bucket',
             messagingSenderId: 'mock-messaging-sender-id',
             appId: 'mock-app-id'
