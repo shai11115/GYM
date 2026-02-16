@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificador Keto Interactivo</title>
+    <style>
+        /* --- VARIABLES DE DISEÑO --- */
+        :root {
+            --verde-oliva: #556B2F;
+            --verde-claro: #8FBC8F;
+            --beige: #F5F5DC;
+            --blanco: #FFFFFF;
+            --gris-oscuro: #2F4F4F;
+            --gris-suave: #F0F0F0;
+            --shadow: 0 4px 15px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+
+        /* MODO OSCURO */
+        body.dark-mode {
+            --verde-oliva: #A2AD91;
+            --beige: #1a1a1a;
+            --blanco: #2d2d2d;
+            --gris-oscuro: #f5f5dc;
+            --gris-suave: #3d3d3d;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body {
+            background-color: var(--beige);
+            color: var(--gris-oscuro);
+            transition: var(--transition);
+            line-height: 1.6;
+        }
+
+        /* --- LAYOUT & NAVEGACIÓN --- */
+        header {
+            background: var(--verde-oliva);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+
+        .menu-btn { font-size: 1.5rem; cursor: pointer; background: none; border: none; color: white; }
+
+        /* Sidebar / Menú Lateral */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background: var(--blanco);
+            z-index: 2000;
+            transition: var(--transition);
+            padding: 2rem;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+        }
+
+        .sidebar.active { left: 0; }
+
+        .close-sidebar {
+            font-size: 2rem;
+            color: var(--verde-oliva);
+            cursor: pointer;
+            float: right;
+            border: none;
+            background: none;
+        }
+
+        .nav-links { list-style: none; margin-top: 3rem; }
+        .nav-links li { padding: 1rem 0; border-bottom: 1px solid var(--gris-suave); cursor: pointer; font-weight: bold; }
+        .nav-links li:hover { color: var(--verde-oliva); }
+
+        /* --- CONTENEDORES --- */
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+        
+        .card {
+            background: var(--blanco);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- SELECTORES PERSONA/SEMANA --- */
+        .persona-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-tab {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: var(--gris-suave);
+            font-weight: bold;
+            transition: var(--transition);
+        }
+
+        .btn-tab.active {
+            background: var(--verde-oliva);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* --- DASHBOARD ELEMENTS --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .stat-box {
+            padding: 1rem;
+            background: var(--gris-suave);
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .progress-container { margin: 15px 0; }
+        .progress-bar {
+            height: 12px;
+            background: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill { height: 100%; transition: width 0.5s ease; width: 0%; }
+        .bg-green { background: #4CAF50; }
+        .bg-red { background: #f44336; }
+
+        /* --- COMIDAS & DIAS --- */
+        .days-nav {
+            display: flex;
+            overflow-x: auto;
+            gap: 5px;
+            padding-bottom: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .day-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid var(--verde-oliva);
+            background: transparent;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .day-btn.active { background: var(--verde-oliva); color: white; }
+
+        .meal-card {
+            border-left: 5px solid var(--verde-oliva);
+            padding: 1rem;
+            margin: 10px 0;
+            background: #f9f9f9;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 40px;
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .btn-add { background: var(--verde-oliva); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .btn-danger { background: #ff4d4d; color: white; border: none; border-radius: 4px; cursor: pointer; width: 30px; height: 30px; }
+
+        /* --- LISTA SUPER --- */
+        .super-list { list-style: none; }
+        .super-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid var(--gris-suave);
+        }
+        .bought { text-decoration: line-through; opacity: 0.6; }
+
+        /* --- MÓVIL Y PRINT --- */
+        @media (max-width: 600px) {
+            .item-row { grid-template-columns: 1fr 1fr; }
+            .item-row *:first-child { grid-column: span 2; }
+            header h1 { font-size: 1.2rem; }
+        }
+
+        @media print {
+            header, .sidebar, .no-print, .btn-add, .persona-selector { display: none !important; }
+            .card { box-shadow: none; border: 1px solid #ccc; }
+            body { background: white; }
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="sidebar">
+        <button class="close-sidebar" onclick="toggleMenu()">×</button>
+        <ul class="nav-links">
+            <li onclick="showSection('section-info')">Información (Dashboard)</li>
+            <li onclick="showSection('section-comidas')">Planificador de Comidas</li>
+            <li onclick="showSection('section-semanas')">Gestión de Semanas</li>
+            <li onclick="showSection('section-super')">Lista de Supermercado</li>
+            <li onclick="toggleDarkMode()">Cambiar Modo</li>
+            <li onclick="exportData()">Sincronizar (Exportar JSON)</li>
+        </ul>
+    </div>
+
+    <header>
+        <button class="menu-btn" onclick="toggleMenu()">☰</button>
+        <h1 id="app-title">Planificador Keto</h1>
+        <div id="moto-msg" style="font-size: 0.8rem; font-style: italic;"></div>
+    </header>
+
+    <div class="container">
+        <!-- SELECTOR DE PERSONA -->
+        <div class="persona-selector">
+            <button id="btn-pA" class="btn-tab active" onclick="switchPersona('A')">Persona A (104.75kg)</button>
+            <button id="btn-pB" class="btn-tab" onclick="switchPersona('B')">Persona B (85.3kg)</button>
+        </div>
+
+        <!-- SECCIÓN INFORMACIÓN -->
+        <section id="section-info" class="app-section">
+            <div class="card">
+                <h2>Información de Perfil</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <label>Peso (kg)</label>
+                        <input type="number" step="0.1" id="inp-peso" onchange="updateProfile()">
+                    </div>
+                    <div class="stat-box">
+                        <label>Altura (cm)</label>
+                        <input type="number" id="inp-altura" onchange="updateProfile()">
+                    </div>
+                    <div class="stat-box">
+                        <label>Objetivo</label>
+                        <input type="text" id="inp-objetivo" placeholder="Ej: 80kg" onchange="updateProfile()">
+                    </div>
+                </div>
+                <div id="protein-range" style="font-weight: bold; color: var(--verde-oliva);">Proteína recomendada: --g</div>
+            </div>
+
+            <div class="card">
+                <h3>Progreso Diario (<span id="display-day">Lunes</span>)</h3>
+                <div class="progress-container">
+                    <label>Proteína: <span id="val-prot">0</span>g / <span id="target-prot">0</span>g</label>
+                    <div class="progress-bar"><div id="bar-prot" class="progress-fill bg-green"></div></div>
+                </div>
+                <div class="progress-container">
+                    <label>Calorías: <span id="val-cal">0</span> / 2500 kcal</label>
+                    <div class="progress-bar"><div id="bar-cal" class="progress-fill bg-green"></div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN COMIDAS -->
+        <section id="section-comidas" class="app-section hidden">
+            <div class="card">
+                <div class="days-nav" id="days-nav">
+                    <!-- JS inyecta días -->
+                </div>
+                <div id="meals-container">
+                    <!-- JS inyecta comidas -->
+                </div>
+                <button class="btn-add" onclick="addMeal()">+ Nueva Comida</button>
+            </div>
+        </section>
+
+        <!-- SECCIÓN SEMANAS -->
+        <section id="section-semanas" class="app-section hidden">
+            <div class="card">
+                <h2>Mis Semanas</h2>
+                <div id="weeks-list"></div>
+                <button class="btn-add" style="margin-top: 1rem;" onclick="addNewWeek()">+ Iniciar Nueva Semana</button>
+                <button class="btn-tab no-print" style="margin-top: 10px;" onclick="window.print()">Imprimir Semana Actual</button>
+            </div>
+        </section>
+
+        <!-- SECCIÓN SUPERMERCADO -->
+        <section id="section-super" class="app-section hidden">
+            <div class="card">
+                <h2>Lista de Supermercado</h2>
+                <div class="stats-grid">
+                    <select id="super-week-select" onchange="renderSuper()"></select>
+                </div>
+                <div id="super-list-content"></div>
+                <hr>
+                <div style="margin-top: 1rem;">
+                    <input type="text" id="new-item-name" placeholder="Nuevo producto...">
+                    <select id="new-item-cat">
+                        <option value="Proteínas">Proteínas</option>
+                        <option value="Verduras">Verduras</option>
+                        <option value="Lácteos">Lácteos</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                    <button class="btn-add" onclick="addItemToSuper()">Añadir</button>
+                    <button class="btn-tab no-print" onclick="window.print()">Imprimir Lista</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        /* --- ESTADO DE LA APP --- */
+        let state = {
+            currentPersona: 'A',
+            currentWeekIdx: 0,
+            currentDay: 'Lunes',
+            darkMode: false,
+            personas: {
+                A: { peso: 104.75, altura: 180, objetivo: '90kg', data: {} },
+                B: { peso: 85.3, altura: 165, objetivo: '75kg', data: {} }
+            },
+            semanas: [
+                { id: Date.now(), nombre: "Semana 1 - Actual", super: [] }
+            ]
+        };
+
+        const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+        const MOTIVACIONES = [
+            "¡Tu cuerpo es un templo, cuídalo!",
+            "La disciplina le gana al talento.",
+            "Keto no es una dieta, es un estilo de vida.",
+            "Cada gramo cuenta, ¡sigue así!",
+            "Persona A y B: Equipo imparable."
+        ];
+
+        /* --- INICIALIZACIÓN --- */
+        function init() {
+            const saved = localStorage.getItem('ketoAppState');
+            if (saved) state = JSON.parse(saved);
+            
+            // Random mensaje
+            document.getElementById('moto-msg').innerText = MOTIVACIONES[Math.floor(Math.random() * MOTIVACIONES.length)];
+            
+            renderDaysNav();
+            switchPersona(state.currentPersona);
+            showSection('section-info');
+        }
+
+        /* --- NAVEGACIÓN --- */
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function showSection(id) {
+            document.querySelectorAll('.app-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            if(id === 'section-super') renderSuper();
+            if(id === 'section-semanas') renderWeeks();
+            toggleMenu();
+        }
+
+        function toggleDarkMode() {
+            state.darkMode = !state.darkMode;
+            document.body.classList.toggle('dark-mode');
+            save();
+        }
+
+        /* --- GESTIÓN PERSONAS --- */
+        function switchPersona(p) {
+            state.currentPersona = p;
+            document.getElementById('btn-pA').classList.toggle('active', p === 'A');
+            document.getElementById('btn-pB').classList.toggle('active', p === 'B');
+            
+            const per = state.personas[p];
+            document.getElementById('inp-peso').value = per.peso;
+            document.getElementById('inp-altura').value = per.altura;
+            document.getElementById('inp-objetivo').value = per.objetivo;
+            
+            calculateMacros();
+            renderMeals();
+            save();
+        }
+
+        function updateProfile() {
+            const p = state.currentPersona;
+            state.personas[p].peso = document.getElementById('inp-peso').value;
+            state.personas[p].altura = document.getElementById('inp-altura').value;
+            state.personas[p].objetivo = document.getElementById('inp-objetivo').value;
+            calculateMacros();
+            save();
+        }
+
+        function calculateMacros() {
+            const p = state.currentPersona;
+            const peso = parseFloat(state.personas[p].peso);
+            let min, max;
+            
+            if(p === 'A') { min = peso * 1.6; max = peso * 2; }
+            else { min = peso * 1.8; max = peso * 2.2; }
+            
+            const target = (min + max) / 2;
+            document.getElementById('protein-range').innerText = `Proteína recomendada diaria: ${min.toFixed(1)}g - ${max.toFixed(1)}g`;
+            document.getElementById('target-prot').innerText = target.toFixed(0);
+            updateProgressBars(target);
+        }
+
+        /* --- COMIDAS --- */
+        function renderDaysNav() {
+            const nav = document.getElementById('days-nav');
+            nav.innerHTML = DIAS.map(d => `<button class="day-btn ${state.currentDay === d ? 'active' : ''}" onclick="setDay('${d}')">${d}</button>`).join('');
+        }
+
+        function setDay(d) {
+            state.currentDay = d;
+            document.getElementById('display-day').innerText = d;
+            renderDaysNav();
+            renderMeals();
+            calculateMacros();
+        }
+
+        function getPersonaDayData() {
+            const p = state.currentPersona;
+            const w = state.currentWeekIdx;
+            const d = state.currentDay;
+            if (!state.personas[p].data[w]) state.personas[p].data[w] = {};
+            if (!state.personas[p].data[w][d]) state.personas[p].data[w][d] = [];
+            return state.personas[p].data[w][d];
+        }
+
+        function renderMeals() {
+            const container = document.getElementById('meals-container');
+            const meals = getPersonaDayData();
+            container.innerHTML = meals.map((meal, mIdx) => `
+                <div class="meal-card">
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong>Comida ${mIdx + 1}</strong>
+                        <div>
+                            <button onclick="duplicateMeal(${mIdx})">📋</button>
+                            <button onclick="removeMeal(${mIdx})" class="btn-danger">×</button>
+                        </div>
+                    </div>
+                    <div id="items-${mIdx}">
+                        ${meal.items.map((it, iIdx) => `
+                            <div class="item-row">
+                                <input type="text" value="${it.nombre}" onchange="editItem(${mIdx}, ${iIdx}, 'nombre', this.value)">
+                                <input type="number" value="${it.g}" placeholder="g" onchange="editItem(${mIdx}, ${iIdx}, 'g', this.value)">
+                                <input type="number" value="${it.cal}" placeholder="kcal" onchange="editItem(${mIdx}, ${iIdx}, 'cal', this.value)">
+                                <input type="number" value="${it.prot}" placeholder="p" onchange="editItem(${mIdx}, ${iIdx}, 'prot', this.value)">
+                                <button class="btn-danger" onclick="removeItem(${mIdx}, ${iIdx})">×</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="btn-add" style="padding: 2px 10px; margin-top:5px;" onclick="addItem(${mIdx})">+ Alimento</button>
+                </div>
+            `).join('');
+            calculateMacros();
+        }
+
+        function addMeal() {
+            getPersonaDayData().push({ items: [] });
+            renderMeals();
+            save();
+        }
+
+        function removeMeal(idx) {
+            getPersonaDayData().splice(idx, 1);
+            renderMeals();
+            save();
+        }
+
+        function addItem(mIdx) {
+            getPersonaDayData()[mIdx].items.push({ nombre: 'Nuevo', g: 100, cal: 200, prot: 20 });
+            renderMeals();
+            save();
+        }
+
+        function editItem(mIdx, iIdx, field, val) {
+            getPersonaDayData()[mIdx].items[iIdx][field] = val;
+            renderMeals();
+            save();
+        }
+
+        function updateProgressBars(targetProt) {
+            const meals = getPersonaDayData();
+            let totalP = 0; let totalC = 0;
+            meals.forEach(m => m.items.forEach(i => {
+                totalP += parseFloat(i.prot || 0);
+                totalC += parseFloat(i.cal || 0);
+            }));
+
+            document.getElementById('val-prot').innerText = totalP.toFixed(1);
+            document.getElementById('val-cal').innerText = totalC.toFixed(0);
+
+            const pPerc = Math.min((totalP / targetProt) * 100, 100);
+            const cPerc = Math.min((totalC / 2500) * 100, 100);
+
+            document.getElementById('bar-prot').style.width = pPerc + '%';
+            document.getElementById('bar-cal').style.width = cPerc + '%';
+            document.getElementById('bar-prot').className = `progress-fill ${totalP > targetProt + 10 ? 'bg-red' : 'bg-green'}`;
+        }
+
+        /* --- SUPERMERCADO --- */
+        function renderSuper() {
+            const week = state.semanas[state.currentWeekIdx];
+            const select = document.getElementById('super-week-select');
+            select.innerHTML = state.semanas.map((s, i) => `<option value="${i}" ${i == state.currentWeekIdx ? 'selected' : ''}>${s.nombre}</option>`).join('');
+            
+            const content = document.getElementById('super-list-content');
+            const categories = ["Proteínas", "Verduras", "Lácteos", "Otros"];
+            
+            content.innerHTML = categories.map(cat => `
+                <div style="margin-top:10px">
+                    <h4>${cat}</h4>
+                    <ul class="super-list">
+                        ${(week.super || []).filter(i => i.cat === cat).map((i, idx) => `
+                            <li class="super-item ${i.bought ? 'bought' : ''}">
+                                <span onclick="toggleBought(${state.semanas[state.currentWeekIdx].super.indexOf(i)})">${i.nombre}</span>
+                                <button class="btn-danger" onclick="deleteSuperItem(${state.semanas[state.currentWeekIdx].super.indexOf(i)})">×</button>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `).join('');
+        }
+
+        function addItemToSuper() {
+            const nombre = document.getElementById('new-item-name').value;
+            const cat = document.getElementById('new-item-cat').value;
+            if(!nombre) return;
+            state.semanas[state.currentWeekIdx].super.push({ nombre, cat, bought: false });
+            document.getElementById('new-item-name').value = '';
+            renderSuper();
+            save();
+        }
+
+        function toggleBought(idx) {
+            state.semanas[state.currentWeekIdx].super[idx].bought = !state.semanas[state.currentWeekIdx].super[idx].bought;
+            renderSuper();
+            save();
+        }
+
+        /* --- GESTIÓN SEMANAS --- */
+        function renderWeeks() {
+            const list = document.getElementById('weeks-list');
+            list.innerHTML = state.semanas.map((s, i) => `
+                <div class="super-item">
+                    <span>${s.nombre}</span>
+                    <div>
+                        <button class="btn-tab" onclick="selectWeek(${i})">${i === state.currentWeekIdx ? 'Actual' : 'Seleccionar'}</button>
+                        <button class="btn-danger" onclick="deleteWeek(${i})">×</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addNewWeek() {
+            const nextIdx = state.semanas.length + 1;
+            state.semanas.push({ id: Date.now(), nombre: `Semana ${nextIdx}`, super: [] });
+            renderWeeks();
+            save();
+        }
+
+        function selectWeek(i) {
+            state.currentWeekIdx = i;
+            renderWeeks();
+            renderMeals();
+            save();
+            alert("Semana seleccionada: " + state.semanas[i].nombre);
+        }
+
+        /* --- UTILIDADES --- */
+        function save() {
+            localStorage.setItem('ketoAppState', JSON.stringify(state));
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "keto_backup.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            alert("Archivo de sincronización generado. Puedes cargarlo en otro dispositivo reemplazando el LocalStorage.");
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
